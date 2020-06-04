@@ -2,24 +2,22 @@
 
 ## Introduction
 
-We recommend follow below steps to do the pre-process for the caffe model:
+We recommend following the steps below to pre-process caffe models:
 
 ## Upgrade the caffe model
 Take the lenet caffe model as example:
 
-```
-upgrade_net_proto_text lenet.prototxt lenet.prototxt
+```shell
+> upgrade_net_proto_text lenet.prototxt lenet.prototxt
 upgrade_net_proto_binary lenet.caffemodel lenet.caffemodel
 ```
-Note: You can find the upgrade_net_proto_text and upgrade_net_proto_binary from the caffe release.
+Note: You can find upgrade_net_proto_text and upgrade_net_proto_binary from the caffe release.
 
-## Do the pre-process
+## Format Conversion
 
-We recommend to use this open source tool (https://github.com/zds79/CaffeBatchnormFuse) to do the pre-process. 
+We recommend to use this open source tool (https://github.com/zds79/CaffeBatchnormFuse) to format your model as follow. 
 
-Take the lenet caffe model as example:
-
+```shell
+> python CaffeBatchnormFuse.py --proto=lenet.prototxt --model=lenet.caffemodel
 ```
-python CaffeBatchnormFuse.py --proto=lenet.prototxt --model=lenet.caffemodel
-```
-The pre-processed lenet_m.prototxt and lenet_m.caffemodel will be generated, and you can use them for the nanoai model generation in the next.
+This generates lenet_m.prototxt and lenet_m.caffemodel, which you can use as nanoai converter inputs.

@@ -1,39 +1,35 @@
 # ![](./doc/NanoAI_MCU.PNG) Nano.AI
 **N**ano.AI is a lightweight neural network inference framework which is fully optimized for NXP 's MCU(arm m-core) platform. 
 
-It is deeply considerate about the deployment of AI models on MCU platform which has limited memory and computing resource from design to implementation. 
+It took into consideration the limitation of memory and computing resources of MCU platforms from design to implementation.
 
 ## Features
 
-- Pure c implementation without 3rd-party library dependency 
-
-- Support float and int8 quantized inference
-
-- Extremely memory reuse
-
-- Fully optimized in performance and accuracy for MCU int8 quantized inference
-
-- Easy deployment on MCU platform
+- Pure c implementation without 3rd-party library dependency
+- Support for float and int8 quantized inference
+- Efficient memory reuse
+- Full optimization in performance and accuracy for MCU int8 quantized inference
+- Easy deployment onto MCU platform
 
 ---
 
 ## Architecture
+
 ![](./doc/NanoAI_Architecture.PNG)
 
-**N**ano.AI can be divided into ***converter*** and ***Inference Engine*** parts.  
+**N**ano.AI can be divided into a ***converter*** and an ***Inference Engine***.  
 
 #### **Converter**
 
-The convert part is responsible for parsing the pre-trained models and convert to Nano.AI defined model format for the following execution on the target. Currently it supports the Caffe format model. Other popular Model format like ONNX/Tensorflow/Pytorch/MXNET will be supported in future.  Currently customer can leverage the open source offline model convert tool to convert them into Caffe for deployment with Nano.AI.
+**N**ano.AI converter prepares the pre-trained models for further deployment. Currently it only supports Caffe models as input (more popular models like ONNX/Tensorflow/Pytorch/MXNET will be supported in the future). You can use open source tools to re-format your model to Caffe format before feeding it into Nano.AI converter.
 
-   - The convert also includes the quantization tool to generate the int8 quantization information for the int8 quantized inference. Currently the quantization tool supports the Caffe format model. 
+- The convert also includes a quantization tool to generate quantization information for int8 quantized inferences. Currently the quantization tool supports Caffe format models only. 
 
 #### **Inference Engine**
 
-
-- The inference engine will build the network graph with the Nano.AI defined model format, then invoke the inference engine to forward the graph with the input data, and extract the output data from the graph to the caller.
-- The inference engine won’t allocate the memory directly, it exports the API to report the buffer requirement of the graph and request the caller to allocated the buffers, all the inference will purely based on the requested buffers.
-- Currently the float inference and int8 quantized inference are supported. The float inference is not fully optimized and only for accuracy comparison purpose. The int8 quantized inference if fully optimized with the NXP MCU int8 accelerations.  Typically the float graph will take 4 times memory requirement compared with int8 graph.  Customer can select the float or int8 inference based on the balance between memory, performance and accuracy. 
+- The inference engine constructs the network graph from Nano.AI format inputs and returns the outputs to the caller.
+- It does not allocate any memory directly. It requests buffer through APIs and let the caller allocate buffers for it. The whole inference process uses caller-provided buffers only.
+- Currently Nano.AI supports float and int8 quantized inferences. Int8 inference process is fully optimized with NXP MCU int8 accelerations, while float inference is not fully optimized and is only for accuracy comparison purpose. Typically float graphs uses 4 times memory compared with int8 graphs but have in a higher accuracy. Customers can decide which inference method to used considering their available memory and performance and accuracy requirements.
 
 ****
 
@@ -44,32 +40,29 @@ The convert part is responsible for parsing the pre-trained models and convert t
 
 #### **Pre-Process Stage**    [[user guide](./doc/preprocess_user_guide.md)]
 
-Pre-Process Stage can leverage the open source ready utilities to do the offline model optimization for better performance, for example:
+At this stage we can use open source tools for offline model formatting, for example:
      - BatchNorm and Scale Merge to Previous Convolution
      - Other operation fusion
 
 #### **Convert stage**    [[user guide](./doc/tools_user_guide.md)]
 
-Convert stage will use the model converter tool to generate the Nano.AI format models.
-     - For the generation of the int8 quantized model, the quantization component will also be invoked to get the quantization information with the calibration data set.  The calibration data set will impact the accuracy of the int8 quantized inference. The training, validation and test data set of the model is highly recommended to use as the calibration data set .
+At convert stage input caffe models are converted into Nano.AI defined models. For int8 quantized models, a calibration dataset is required to produce quantization information. The calibration dataset can affect the accuracy of int8 inference result so it is highly recommended to use the training, validation and testing data of the input model as the calibration dataset.
 
 #### **Inference stage**    [[engine API](./doc/engine_api.md)]
 
-Inference stage will take the generated Nano.AI format model and the input data to do the graph inference, then extract the output data for the caller.
-     - Popular network such as LENET, CIFAR10 will be provided as the SDK example of the deployment for customer reference.
+At inference stage the engine takes the Nano.AI format model from converter, with some additional input data, and carry out graph inference. It then extracts the output data for the caller. - Popular network such as LENET, CIFAR10 are privided as SDK deployment examples for users' reference.
 
 ****
 
 ## Nano.AI model definition
 
-**N**ano.AI model is represented in ***c array format*** for compiling into the final application. It has below 3 components:
+A Nano.AI model is represented as an ***array*** in C. It has 3 components as described below:
 
 #### **Blob ID Definition**
 
-Unique id for the blobs
-  - Input/output/intermedia
+Each blob has a unique ID. A blob can be input, output or intermedia.
 
-```
+```c
 enum {
     LENET_INT8_B_DATA_ID = 0,
     LENET_INT8_B_CONV1_ID = 1,
@@ -82,12 +75,13 @@ enum {
 
 The model graph information:
 
-Layers
-  - Layer information: type, parameters
-  - Bottom blobs
-  - Top blobs.
+A layer includes:
 
-```
+- Layer information: type, parameters
+- Bottom blobs
+- Top blobs
+
+```c
 NANONN_MODEL static NANONN_CONST unsigned char BINARY_MODEL_ALIGN lenet_int8_binary_model[] = {
 0x5a,0x44,0x00,0x01,0x09,0x00,0x09,0x00,0x02,0x00,0x01,0x00,0x09,0x00,0x02,0x00,
 0x18,0x02,0x00,0x00,0x24,0x00,0x00,0x00,0x30,0x00,0x00,0x00,0xae,0x00,0x00,0x00,
@@ -98,10 +92,12 @@ NANONN_MODEL static NANONN_CONST unsigned char BINARY_MODEL_ALIGN lenet_int8_bin
 ```
 #### **Model Data**
 
-Layers which have the weights/bias
-  - Weights/Bias information: size, format
-  - Weights/Bias data
-```
+Weights/bias for each layer includes:
+
+- Weights/Bias information: size, format
+- Weights/Bias data
+
+```c
 NANONN_MODEL_DATA static NANONN_CONST unsigned char BINARY_MODEL_ALIGN lenet_int8_binary_model_data[] = {
 0x64,0x00,0x00,0x00,0x58,0x02,0x00,0x00,0x03,0x00,0x02,0x00,0xa8,0x61,0x00,0x00,
 0x32,0x00,0x00,0x00,0xa8,0x02,0x00,0x00,0x50,0x64,0x00,0x00,0x05,0x00,0x02,0x00,
@@ -143,6 +139,7 @@ NANONN_MODEL_DATA static NANONN_CONST unsigned char BINARY_MODEL_ALIGN lenet_int
 
 ## Community
 WeChat Group "Nano.AI"
+
 ![](./doc/NanoAI_WeChat.PNG)
 ---
 

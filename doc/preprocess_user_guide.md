@@ -2,14 +2,16 @@
 
 ## Introduction
 
-Nano.AI will leverage the open source utilities to do the model pre-process for below purposes:
+With help of open source tools, Nano.AI takes a caffe model and go through the folloing procesures:
 
 - model format check
-- optimize for the inference
-- adjust for the nanoai inference
+- Inference optimization 
+- Inference adjustment
 
 ## Caffe model pre-process
+
 [caffe model pre-process user guide](./caffe_model_preprocess.md)
 
 ## ONNX model pre-process
+
 Under development

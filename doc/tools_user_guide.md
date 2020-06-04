@@ -2,7 +2,7 @@
 
 ## Introduction
 
-Nano.AI provides ubuntu host tool sets to support different model format which is trained with different framework.
+Nano.AI provides ubuntu host toolsets to support various model formats trained with different frameworks.
 
 ## Caffe convert tool
 [caffe2nanoai user guide](./caffe2nanoai_user_guide.md)
